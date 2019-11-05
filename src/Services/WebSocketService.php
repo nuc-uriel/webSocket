@@ -15,6 +15,7 @@ trait WebSocketService
     private $server;
     private $sockets = array();
     private $clients = array();
+    public $channels = array();
 
     public function setAddress($address)
     {
@@ -53,7 +54,8 @@ trait WebSocketService
                     $key = uniqid();
                     $this->clients[$key] = array(
                         'socket' => $client,
-                        'build' => false
+                        'build' => false,
+                        'listen' => []
                     );
                 } else {
                     $len = 0;
@@ -72,7 +74,11 @@ trait WebSocketService
                         $this->handshake($buffer, $key);
                     }else {
                         $message = $this->decode($buffer);
-                        event(new ReceiveMsg($socket, $message));
+                        if ($message['type'] == 'listen') {
+                            $this->addListen($key, $message['msg']);
+                        }else {
+                            event(new ReceiveMsg($socket, $message));
+                        }
                     }
                 }
             }
@@ -166,6 +172,7 @@ HEADERS;
         for ($index = 0; $index < strlen($data); $index++) {
             $decoded .= $data[$index] ^ $masks[$index % 4];
         }
+        $decoded = json_decode($decoded, true);
         return $decoded;
     }
 

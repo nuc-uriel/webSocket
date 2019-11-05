@@ -10,7 +10,8 @@
     ],
     "require": {
         "laravel/framework": "v5.5.48",
-        "ext-sockets": "*"
+        "ext-sockets": "*",
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {
