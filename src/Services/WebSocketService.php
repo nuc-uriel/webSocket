@@ -4,15 +4,17 @@
 namespace Nucuriel\WebSocket\Services;
 
 
-class WebSocketService
+use Nucuriel\Websocket\Events\ReceiveMsg;
+use Nucuriel\Websocket\Jobs\SendMsg;
+
+trait WebSocketService
 {
-    const BINARY_TYPE_BLOB = "\x81";
+    private $binaryTypeBlob = "\x81";
     private $address;
     private $port;
     private $server;
     private $sockets = array();
     private $clients = array();
-    private $reply;
 
     public function setAddress($address)
     {
@@ -35,15 +37,6 @@ class WebSocketService
         $this->server = $server;
         $this->sockets[] = $this->server;
         return $this;
-    }
-
-    public function initReply()
-    {
-        return function($msg, $socket){
-            $response = "我收到你发的消息了，你发的是：" . $msg;
-            $response = $this->encode($response);
-            socket_write($socket, $response, strlen($response));
-        };
     }
 
     public function run()
@@ -79,7 +72,7 @@ class WebSocketService
                         $this->handshake($buffer, $key);
                     }else {
                         $message = $this->decode($buffer);
-                        $this->reply($message, $socket);
+                        event(new ReceiveMsg($socket, $message));
                     }
                 }
             }
@@ -179,7 +172,7 @@ HEADERS;
     private function encode($buffer)
     {
         $len = strlen($buffer);
-        $first_byte = self::BINARY_TYPE_BLOB;
+        $first_byte = $this->binaryTypeBlob;
         if ($len <= 125) {
             $encode_buffer = $first_byte . chr($len) . $buffer;
         } else {
@@ -191,5 +184,12 @@ HEADERS;
             }
         }
         return $encode_buffer;
+    }
+
+    public function sendMsg($socket, $message)
+    {
+        $response = $this->encode($message);
+        $job = (new sendMsg($socket, $response))->onQueue('webSocket');
+        dispatch($job);
     }
 }
