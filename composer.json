@@ -1,0 +1,20 @@
+{
+    "name": "nucuriel/web-socket",
+    "description": "PHP  websocket",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "nucuriel",
+            "email": "admin@zhaochenkai.cn"
+        }
+    ],
+    "require": {
+        "laravel/framework": "v5.5.48",
+        "ext-sockets": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Houdunwang\\Uploader\\": "src/"
+        }
+    }
+}
